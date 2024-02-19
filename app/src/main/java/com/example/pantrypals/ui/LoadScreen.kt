@@ -1,12 +1,8 @@
 package com.example.pantrypals.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,44 +13,53 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.pantrypals.R
 import com.example.pantrypals.ui.theme.PantryPalsTheme
 
+/*
+Creates the main screen with a "Touch To Enter Pantry" text field
+ */
 @Composable
 fun PantryPalsApp() {
     Box(
+        contentAlignment = Alignment.BottomCenter,
         modifier = with (Modifier) {
             fillMaxSize()
-                .paint(
+                paint(
                     painterResource(id = R.drawable.logo),
-                    contentScale = ContentScale.FillBounds
+                    contentScale = ContentScale.FillBounds,
                 )
         }){
-        Column(
-            modifier = Modifier.
-                padding(30.dp)
-                .fillMaxWidth()
-                .wrapContentSize(Alignment.Center),
-        ){
-            Row(
-                modifier = Modifier.
-
-                    weight(1f, false)
-            ) {
-                Text(
-                    text = "Press to Enter Pantry",
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        Text(
+            text = "Touch to Enter Pantry",
+            fontSize = 25.sp,
+            modifier = Modifier.padding(23.dp),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
+/*
+Allows for the Design screen to load and can Preview the screen without
+emulating it on a device
+ */
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun LoadPreview() {
     PantryPalsTheme {
         PantryPalsApp()
     }
 }
+
+/*
+List of the different screens our app will have to navigate
+ */
+enum class PantryScreens(){
+    Start,
+    Pantry,
+    AddItems,
+    RemoveItems
+}
+
+
