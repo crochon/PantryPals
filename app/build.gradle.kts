@@ -66,4 +66,13 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("androidx.navigation:navigation-compose:2.4.0-alpha04")
+
+    val sqlite_version = "2.4.0"
+    // Kotlin
+    implementation("androidx.sqlite:sqlite-ktx:$sqlite_version")
+
+    // Implementation of the AndroidX SQLite interfaces via the Android framework APIs.
+    implementation("androidx.sqlite:sqlite-framework:$sqlite_version")
 }
