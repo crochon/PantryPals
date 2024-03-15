@@ -17,9 +17,8 @@ class DBHandler  // creating a constructor for our database handler.
         val query = ("CREATE TABLE " + TABLE_NAME + " ("
                 + ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + NAME_COL + " TEXT,"
-                + DURATION_COL + " TEXT,"
-                + DESCRIPTION_COL + " TEXT,"
-                + TRACKS_COL + " TEXT)")
+                + COUNT_COL + " TEXT,"
+                + EXPIRATION_COL + " TEXT,")
 
         // at last we are calling a exec sql method to execute above sql query
         db.execSQL(query)
@@ -27,10 +26,9 @@ class DBHandler  // creating a constructor for our database handler.
 
     // this method is use to add new course to our sqlite database.
     fun addNewCourse(
-        courseName: String?,
-        courseDuration: String?,
-        courseDescription: String?,
-        courseTracks: String?
+        ItemName: String?,
+        ItemCount: Int?,
+        ItemExperiation: Int?,
     ) {
         // on below line we are creating a variable fors
         // our sqlite database and calling writable method
@@ -41,10 +39,9 @@ class DBHandler  // creating a constructor for our database handler.
         val values = ContentValues()
         // on below line we are passing all values
         // along with its key and value pair.
-        values.put(NAME_COL, courseName)
-        values.put(DURATION_COL, courseDuration)
-        values.put(DESCRIPTION_COL, courseDescription)
-        values.put(TRACKS_COL, courseTracks)
+        values.put(NAME_COL, ItemName)
+        values.put(COUNT_COL, ItemCount)
+        values.put(EXPIRATION_COL, ItemExperiation)
         // after adding all values we are passing
         // content values to our table.
         db.insert(TABLE_NAME, null, values)
@@ -62,28 +59,25 @@ class DBHandler  // creating a constructor for our database handler.
     companion object {
         // creating a constant variables for our database.
         // below variable is for our database name.
-        private const val DB_NAME = "coursedb"
+        private const val DB_NAME = "Pantry DB"
 
         // below int is our database version
         private const val DB_VERSION = 1
 
         // below variable is for our table name.
-        private const val TABLE_NAME = "mycourses"
+        private const val TABLE_NAME = "Pantry Name"
 
         // below variable is for our id column.
         private const val ID_COL = "id"
 
         // below variable is for our course name column
-        private const val NAME_COL = "name"
+        private const val NAME_COL = "Grocery Name"
 
         // below variable id for our course duration column.
-        private const val DURATION_COL = "duration"
+        private const val COUNT_COL = "Grocery Count"
 
         // below variable for our course description column.
-        private const val DESCRIPTION_COL = "description"
-
-        // below variable is for our course tracks column.
-        private const val TRACKS_COL = "tracks"
+        private const val EXPIRATION_COL = "Grocery Expiration"
     }
 
     // we have created a new method for reading all the courses.
@@ -92,28 +86,27 @@ class DBHandler  // creating a constructor for our database handler.
         val db = this.readableDatabase
 
         // on below line we are creating a cursor with query to read data from database.
-        val cursorCourses: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
+        val cursorPantry: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
 
         // on below line we are creating a new array list.
         val courseModelArrayList: ArrayList<PantryModel> = ArrayList()
 
         // moving our cursor to first position.
-        if (cursorCourses.moveToFirst()) {
+        if (cursorPantry.moveToFirst()) {
             do {
                 // on below line we are adding the data from cursor to our array list.
                 courseModelArrayList.add(
                     PantryModel(
-                        cursorCourses.getString(1),
-                        cursorCourses.getString(4),
-                        cursorCourses.getString(2),
-                        cursorCourses.getString(3)
+                        cursorPantry.getString(1),
+                        cursorPantry.getInt(2),
+                        cursorPantry.getInt(3)
                     )
                 )
-            } while (cursorCourses.moveToNext())
+            } while (cursorPantry.moveToNext())
             // moving our cursor to next.
         }
         // at last closing our cursor and returning our array list.
-        cursorCourses.close()
+        cursorPantry.close()
         return courseModelArrayList
     }
 }
