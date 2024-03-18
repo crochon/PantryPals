@@ -25,7 +25,7 @@ class DBHandler  // creating a constructor for our database handler.
     }
 
     // this method is use to add new course to our sqlite database.
-    fun addNewCourse(
+    fun andNewGrocery(
         ItemName: String?,
         ItemCount: Int?,
         ItemExperiation: Int?,
