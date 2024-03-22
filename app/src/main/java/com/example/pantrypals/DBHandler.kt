@@ -28,9 +28,9 @@ class DBHandler  // creating a constructor for our database handler.
     public fun addNewGrocery(
         ItemName: String?,
         ItemCount: Int?,
-        ItemExpiration: Int?,
+        ItemExpiration: String?,
     ) {
-        // on below line we are creating a variable fors
+        // on below line we are creating a variable for
         // our sqlite database and calling writable method
         // as we are writing data in our database.
         val db = this.writableDatabase
@@ -113,7 +113,7 @@ class DBHandler  // creating a constructor for our database handler.
                         cursorPantry.getInt(0),
                         cursorPantry.getString(1),
                         cursorPantry.getInt(2),
-                        cursorPantry.getInt(3)
+                        cursorPantry.getString(3)
                     )
                 )
             } while (cursorPantry.moveToNext())

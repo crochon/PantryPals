@@ -31,7 +31,7 @@ fun HomePantry(navController: NavController) {
     val calendar = Calendar.getInstance()
     val dbHandler = DBHandler(context)
     var groceries = dbHandler.readGroceries()
-    var targetItem by remember { mutableStateOf(PantryModel(-1,"",-1,-1)) }
+    var targetItem by remember { mutableStateOf(PantryModel(-1,"",-1,"")) }
 
 
     Box(
@@ -113,6 +113,8 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // Add the item details to the database
+                        dbHandler.addNewGrocery(itemName,quantity,expirationDate)
+
                         isAddDialogVisible = false
                     }
                 ) {
