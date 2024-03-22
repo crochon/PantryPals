@@ -1,5 +1,6 @@
 package com.example.pantrypals.ui
 
+import HomePantry
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,7 +15,7 @@ fun Navigation(){
             LoadScreen(navController = navController)
         }
         composable(route = Screen.HomePantry.route){
-            HomePantry()
+            HomePantry(navController = navController)
         }
     }
 }
