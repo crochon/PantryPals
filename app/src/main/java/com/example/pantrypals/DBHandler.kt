@@ -25,10 +25,10 @@ class DBHandler  // creating a constructor for our database handler.
     }
 
     // this method is use to add new course to our sqlite database.
-    fun andNewGrocery(
+    fun addNewGrocery(
         ItemName: String?,
         ItemCount: Int?,
-        ItemExperiation: Int?,
+        ItemExpiration: Int?,
     ) {
         // on below line we are creating a variable fors
         // our sqlite database and calling writable method
@@ -41,12 +41,20 @@ class DBHandler  // creating a constructor for our database handler.
         // along with its key and value pair.
         values.put(NAME_COL, ItemName)
         values.put(COUNT_COL, ItemCount)
-        values.put(EXPIRATION_COL, ItemExperiation)
+        values.put(EXPIRATION_COL, ItemExpiration)
         // after adding all values we are passing
         // content values to our table.
         db.insert(TABLE_NAME, null, values)
         // at last we are closing our
         // database after adding database.
+        db.close()
+    }
+
+    fun removeGrocery(ItemName: String?, ItemExpiration: Int?){
+        val db = this.writableDatabase
+
+        db.delete(TABLE_NAME,"Grocery name=? and Grocery Expiration=?", arrayOf(ItemName,ItemExpiration.toString()))
+
         db.close()
     }
 
@@ -81,7 +89,7 @@ class DBHandler  // creating a constructor for our database handler.
     }
 
     // we have created a new method for reading all the courses.
-    fun readCourses(): ArrayList<PantryModel>? {
+    fun readGroceries(): ArrayList<PantryModel>? {
         // on below line we are creating a database for reading our database.
         val db = this.readableDatabase
 
