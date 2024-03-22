@@ -1,5 +1,7 @@
 package com.example.pantrypals
 
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.example.pantrypals.ui.LoadScreen
 import com.example.pantrypals.ui.Navigation
 import com.example.pantrypals.ui.theme.PantryPalsTheme
@@ -22,8 +25,11 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Navigation()
+
                 }
             }
         }
+
+
     }
 }

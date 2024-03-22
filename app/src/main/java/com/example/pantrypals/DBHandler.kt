@@ -18,14 +18,14 @@ class DBHandler  // creating a constructor for our database handler.
                 + ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + NAME_COL + " TEXT,"
                 + COUNT_COL + " TEXT,"
-                + EXPIRATION_COL + " TEXT,")
+                + EXPIRATION_COL + " TEXT);")
 
         // at last we are calling a exec sql method to execute above sql query
         db.execSQL(query)
     }
 
     // this method is use to add new course to our sqlite database.
-    fun addNewGrocery(
+    public fun addNewGrocery(
         ItemName: String?,
         ItemCount: Int?,
         ItemExpiration: Int?,
@@ -50,10 +50,15 @@ class DBHandler  // creating a constructor for our database handler.
         db.close()
     }
 
-    fun removeGrocery(ItemName: String?, ItemExpiration: Int?){
+    /*
+        Removes a Grocery Item Based on it's ID
+     */
+    public fun removeGrocery(ItemID: Int?){
         val db = this.writableDatabase
 
-        db.delete(TABLE_NAME,"Grocery name=? and Grocery Expiration=?", arrayOf(ItemName,ItemExpiration.toString()))
+        println("$ItemID")
+        // delete row where id matches given parameters.
+        db.delete(TABLE_NAME, "$ID_COL=?", arrayOf(ItemID.toString()))
 
         db.close()
     }
@@ -67,29 +72,29 @@ class DBHandler  // creating a constructor for our database handler.
     companion object {
         // creating a constant variables for our database.
         // below variable is for our database name.
-        private const val DB_NAME = "Pantry DB"
+        private const val DB_NAME = "Pantry_DB"
 
         // below int is our database version
         private const val DB_VERSION = 1
 
         // below variable is for our table name.
-        private const val TABLE_NAME = "Pantry Name"
+        private const val TABLE_NAME = "Pantry_Name"
 
         // below variable is for our id column.
         private const val ID_COL = "id"
 
         // below variable is for our course name column
-        private const val NAME_COL = "Grocery Name"
+        private const val NAME_COL = "Grocery_Name"
 
         // below variable id for our course duration column.
-        private const val COUNT_COL = "Grocery Count"
+        private const val COUNT_COL = "Grocery_Count"
 
         // below variable for our course description column.
-        private const val EXPIRATION_COL = "Grocery Expiration"
+        private const val EXPIRATION_COL = "Grocery_Expiration"
     }
 
     // we have created a new method for reading all the courses.
-    fun readGroceries(): ArrayList<PantryModel>? {
+    public fun readGroceries(): ArrayList<PantryModel>? {
         // on below line we are creating a database for reading our database.
         val db = this.readableDatabase
 
@@ -105,6 +110,7 @@ class DBHandler  // creating a constructor for our database handler.
                 // on below line we are adding the data from cursor to our array list.
                 courseModelArrayList.add(
                     PantryModel(
+                        cursorPantry.getInt(0),
                         cursorPantry.getString(1),
                         cursorPantry.getInt(2),
                         cursorPantry.getInt(3)
