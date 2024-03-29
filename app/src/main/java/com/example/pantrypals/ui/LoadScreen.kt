@@ -29,7 +29,7 @@ Creates the main screen with a "Touch To Enter Pantry" text field
 fun LoadScreen(navController: NavController) {
     Surface(
         onClick = {
-            navController.navigate(Screen.HomePantry.route)
+            navController.navigate(Screen.SelectPantry.route)
         }
     ) {
 

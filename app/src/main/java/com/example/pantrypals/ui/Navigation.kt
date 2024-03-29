@@ -17,5 +17,8 @@ fun Navigation(){
         composable(route = Screen.HomePantry.route){
             HomePantry(navController = navController)
         }
+        composable(route = Screen.SelectPantry.route){
+           SelectPantry(navController = navController)
+        }
     }
 }

@@ -1,3 +1,5 @@
+package com.example.pantrypals.ui
+
 import android.app.DatePickerDialog
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -15,12 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.pantrypals.DBHandler
 import com.example.pantrypals.PantryModel
+import com.example.pantrypals.Screen
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun HomePantry(navController: NavController) {
+fun SelectPantry(navController: NavController) {
     val DarkGreen = Color(0, 100, 0)
     var itemName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(0) }
@@ -69,7 +72,7 @@ fun HomePantry(navController: NavController) {
             enabled = true,
             colors = ButtonDefaults.buttonColors(DarkGreen)
         ) {
-            Text(text = "Add Item")
+            Text(text = "Add Pantry")
         }
     }
 
@@ -82,7 +85,9 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // remove item from database
-                            isRemoveDialogVisible = false
+                        dbHandler.removeGrocery(targetItem.itemID)
+
+                        isRemoveDialogVisible = false
                     }
                 ) {
                     Text("Remove")
@@ -111,7 +116,9 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // Add the item details to the database
-                           isAddDialogVisible = false
+                        dbHandler.addNewGrocery(itemName,quantity,expirationDate)
+
+                        isAddDialogVisible = false
                     }
                 ) {
                     Text("Add")
@@ -204,13 +211,3 @@ fun HomePantry(navController: NavController) {
         )
     }
 }
-
-
-
-
-
-
-
-
-
-
