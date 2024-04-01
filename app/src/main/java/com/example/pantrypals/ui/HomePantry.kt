@@ -50,7 +50,7 @@ fun HomePantry(navController: NavController) {
                     targetItem = grocery
                 }) { }
                 ) {
-                    Text("${grocery.itemName} Quantity: ${grocery.itemCount} Expires: ${grocery.ItemExpiration}",
+                    Text("${grocery.itemName} Quantity: ${grocery.itemCount} Expires: ${grocery.itemExpiration}",
                         Modifier
                             .fillMaxWidth()
                             .background(Color.LightGray)

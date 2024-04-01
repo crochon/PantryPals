@@ -1,213 +1,153 @@
-package com.example.pantrypals.ui
-
-import android.app.DatePickerDialog
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.pantrypals.DBHandler
-import com.example.pantrypals.PantryModel
+import androidx.compose.material3.TopAppBarDefaults
 import com.example.pantrypals.Screen
-import java.text.SimpleDateFormat
-import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectPantry(navController: NavController) {
-    val DarkGreen = Color(0, 100, 0)
-    var itemName by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf(0) }
-    var expirationDate by remember { mutableStateOf("") }
-    var isAddDialogVisible by remember { mutableStateOf(false) }
-    var isRemoveDialogVisible by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    val dbHandler = DBHandler(context)
-    var groceries = dbHandler.readGroceries()
-    var targetItem by remember { mutableStateOf(PantryModel(-1,"",-1,"")) }
+    val pantries = remember { mutableStateOf(listOf<String>()) }
 
-
-    Box(
-        contentAlignment = Alignment.TopCenter,
-        modifier = Modifier.padding(32.dp)
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary
+                ),
+                title = {
+                    Text("Pantries", fontWeight = FontWeight.Bold)
+                },
+                actions = {
+                    AddPantryButton(navController) { pantryName ->
+                        pantries.value = pantries.value + pantryName
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(Color.White)
         ) {
-            groceries?.forEachIndexed { index, grocery ->
-                Row(Modifier.combinedClickable(onLongClick = {
-                    isRemoveDialogVisible = true
-                    targetItem = grocery
-                }) { }
+            if (pantries.value.isEmpty()) { // Display message only if there are no pantries
+                Text(
+                    text = "Your pantries will appear here",
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("${grocery.itemName} Quantity: ${grocery.itemCount} Expires: ${grocery.ItemExpiration}",
-                        Modifier
-                            .fillMaxWidth()
-                            .background(Color.LightGray)
-                            .padding(8.dp))
+                    //Display pantries
+                    items(pantries.value) { pantry ->
+                        Text(
+                            text = pantry,
+                            modifier = Modifier.padding(16.dp).clickable {
+                                //Navigate to HomePantry Screen
+                                navController.navigate(Screen.HomePantry.route)
+                            },
+                        fontSize = 16.sp,
+                        color = Color.Black
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+fun AddPantryButton(navController: NavController, onPantryAdded: (String) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
 
     Box(
-        contentAlignment = Alignment.BottomCenter,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(end = 16.dp)
     ) {
-        OutlinedButton(
-            onClick = { isAddDialogVisible = true },
-            enabled = true,
-            colors = ButtonDefaults.buttonColors(DarkGreen)
-        ) {
-            Text(text = "Add Pantry")
+        //Button to add new pantry
+        Text(
+            text = "+",
+            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp,
+            color = Color.Blue,
+            modifier = Modifier.clickable { showDialog = true }
+        )
+
+        if (showDialog) {
+            AddPantryDialog(
+                onDismiss = { showDialog = false },
+                onPantryCreated = { pantryName ->
+                    onPantryAdded(pantryName)
+                    showDialog = false
+                }
+            )
         }
     }
+}
 
-    if (isRemoveDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { isRemoveDialogVisible = false },
-            title = { Text(text = "Remove ${targetItem.itemName}?") },
-            confirmButton = {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddPantryDialog(
+    onDismiss: () -> Unit,
+    onPantryCreated: (pantryName: String) -> Unit
+) {
+    var pantryName by remember { mutableStateOf("") }
 
-                Button(
-                    onClick = {
-                        // remove item from database
-                        dbHandler.removeGrocery(targetItem.itemID)
-
-                        isRemoveDialogVisible = false
-                    }
-                ) {
-                    Text("Remove")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Add Pantry", fontWeight = FontWeight.Bold) },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Call the callback function to create the pantry
+                    onPantryCreated(pantryName)
                 }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { isRemoveDialogVisible = false }
-                ) {
-                    Text("Keep ${targetItem.itemName}")
-                }
-            },
-            text = {
-                Box {
-                    Text(text = "Are you sure you want to remove ${targetItem.itemName}?")
-                }
+            ) {
+                Text("Add", fontWeight = FontWeight.Bold)
             }
-        )
-    }
-
-    if (isAddDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { isAddDialogVisible = false },
-            title = { Text(text = "Add New Item") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        // Add the item details to the database
-                        dbHandler.addNewGrocery(itemName,quantity,expirationDate)
-
-                        isAddDialogVisible = false
-                    }
-                ) {
-                    Text("Add")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { isAddDialogVisible = false }
-                ) {
-                    Text("Cancel")
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    OutlinedTextField(
-                        value = itemName,
-                        onValueChange = { itemName = it },
-                        label = { Text("Item Name") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    //Pick Quantity
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Quantity: ",
-                            color = DarkGreen
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = { if (quantity > 0) quantity-- },
-                            enabled = quantity > 0
-                        ) {
-                            Text("-")
-                        }
-                        Text(
-                            text = quantity.toString(),
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        Button(
-                            onClick = { quantity++ },
-                            enabled = true
-                        ) {
-                            Text("+")
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Expiration date selection
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Expiration Date: ",
-                            color = DarkGreen
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                // Open date picker dialog
-                                val dateSetListener =
-                                    DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
-                                        val selectedDate = Calendar.getInstance()
-                                        selectedDate.set(year, monthOfYear, dayOfMonth)
-                                        expirationDate = SimpleDateFormat(
-                                            "dd/MM/yyyy",
-                                            Locale.getDefault()
-                                        ).format(selectedDate.time)
-                                    }
-
-                                val datePickerDialog = DatePickerDialog(
-                                    context,
-                                    dateSetListener,
-                                    calendar.get(Calendar.YEAR),
-                                    calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH)
-                                )
-                                datePickerDialog.show()
-                            }
-                        ) {
-                            Text(text = expirationDate.ifEmpty { "Select Date" })
-                        }
-                    }
-                }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss
+            ) {
+                Text("Cancel")
             }
-        )
-    }
+        },
+        text = {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Text field for entering pantry name
+                TextField(
+                    value = pantryName,
+                    onValueChange = { pantryName = it },
+                    label = { Text("Pantry Name", fontWeight = FontWeight.Bold) },
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+        }
+    )
 }

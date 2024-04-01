@@ -1,6 +1,7 @@
 package com.example.pantrypals.ui
 
 import HomePantry
+import SelectPantry
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
