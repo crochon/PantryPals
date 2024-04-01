@@ -104,8 +104,21 @@ fun HomePantry(navController: NavController) {
     }
 
     if (isAddDialogVisible) {
+        LaunchedEffect(isAddDialogVisible) {
+            if (isAddDialogVisible) {
+                // Reset fields when dialog becomes visible
+                itemName = ""
+                quantity = 0
+                expirationDate = ""
+            }
+        }
         AlertDialog(
-            onDismissRequest = { isAddDialogVisible = false },
+            onDismissRequest = { isAddDialogVisible = false
+                // Reset fields when dialog is dismissed
+                itemName = ""
+                quantity = 0
+                expirationDate = ""
+            },
             title = { Text(text = "Add New Item") },
             confirmButton = {
                 Button(
