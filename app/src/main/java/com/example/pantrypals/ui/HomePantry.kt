@@ -82,7 +82,9 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // remove item from database
-                            isRemoveDialogVisible = false
+                        dbHandler.removeGrocery(targetItem.itemID)
+
+                        isRemoveDialogVisible = false
                     }
                 ) {
                     Text("Remove")
@@ -90,7 +92,8 @@ fun HomePantry(navController: NavController) {
             },
             dismissButton = {
                 Button(
-                    onClick = { isRemoveDialogVisible = false }
+                    onClick = {
+                        isRemoveDialogVisible = false }
                 ) {
                     Text("Keep ${targetItem.itemName}")
                 }
@@ -124,6 +127,7 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // Add the item details to the database
+                        dbHandler.addNewGrocery(itemName ,quantity, expirationDate)
                            isAddDialogVisible = false
                     }
                 ) {
