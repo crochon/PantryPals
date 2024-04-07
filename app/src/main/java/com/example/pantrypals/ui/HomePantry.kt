@@ -54,7 +54,7 @@ fun HomePantry(navController: NavController) {
         contentAlignment = Alignment.TopCenter,
         modifier = Modifier.padding(16.dp)
     ){
-        var text = ""
+        var text by remember {mutableStateOf("")}
         TextField(
             value = text,
             onValueChange = { text = it },
