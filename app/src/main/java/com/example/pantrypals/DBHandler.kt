@@ -143,4 +143,33 @@ class DBHandler  // creating a constructor for our database handler.
         cursorPantry.close()
         return courseModelArrayList
     }
+    public fun SearchPanty(text: String): ArrayList<PantryModel>?{
+        // on below line we are creating a database for reading our database.
+        val db = this.readableDatabase
+
+        // on below line we are creating a cursor with query to read data from database.
+        val cursorPantry: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $NAME_COL LIKE \'%$text%\'  ", null)
+
+        // on below line we are creating a new array list.
+        val SearchArrayList: ArrayList<PantryModel> = ArrayList()
+
+        // moving our cursor to first position.
+        if (cursorPantry.moveToFirst()) {
+            do {
+                // on below line we are adding the data from cursor to our array list.
+                SearchArrayList.add(
+                    PantryModel(
+                        cursorPantry.getInt(0),
+                        cursorPantry.getString(1),
+                        cursorPantry.getInt(2),
+                        cursorPantry.getString(3)
+                    )
+                )
+            } while (cursorPantry.moveToNext())
+            // moving our cursor to next.
+        }
+        // at last closing our cursor and returning our array list.
+        cursorPantry.close()
+        return SearchArrayList
+    }
 }

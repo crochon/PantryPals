@@ -37,7 +37,7 @@ fun HomePantry(navController: NavController) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dbHandler = DBHandler(context)
-    var groceries = dbHandler.readGroceries()
+    var groceries by remember {mutableStateOf(dbHandler.readGroceries())}
 
     var isDeleteDialogOpen by remember { mutableStateOf(false) }
     var isEditQuantityDialogVisible by remember {mutableStateOf(false)}
@@ -49,7 +49,7 @@ fun HomePantry(navController: NavController) {
     val interactionSource = remember{ MutableInteractionSource() }
     val density = LocalDensity.current
 
-
+    //search
     Box(
         contentAlignment = Alignment.TopCenter,
         modifier = Modifier.padding(16.dp)
@@ -57,11 +57,12 @@ fun HomePantry(navController: NavController) {
         var text by remember {mutableStateOf("")}
         TextField(
             value = text,
-            onValueChange = { text = it },
+            onValueChange = {text = it;groceries = dbHandler.SearchPanty(text)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = "Search")}
         )
     }
+
     Box(
         contentAlignment = Alignment.TopCenter,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 70.dp)
