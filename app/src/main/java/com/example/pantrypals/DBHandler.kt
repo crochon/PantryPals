@@ -50,6 +50,26 @@ class DBHandler  // creating a constructor for our database handler.
         db.close()
     }
 
+    public fun EditQuantity(ItemID: Int?, ItemQuantity: Int?){
+        val db = this.writableDatabase
+        val values = ContentValues()
+
+        values.put(COUNT_COL, ItemQuantity)
+
+        db.update(TABLE_NAME,values,"$ID_COL=?", arrayOf(ItemID.toString()))
+        db.close()
+    }
+
+    public fun EditExpirationDate(ItemID: Int?, ItemExpiration: String?){
+        val db = this.writableDatabase
+        val values = ContentValues()
+
+        values.put(EXPIRATION_COL, ItemExpiration)
+
+        db.update(TABLE_NAME,values,"$ID_COL=?", arrayOf(ItemID.toString()))
+        db.close()
+    }
+
     /*
         Removes a Grocery Item Based on it's ID
      */
