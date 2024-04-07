@@ -52,7 +52,19 @@ fun HomePantry(navController: NavController) {
 
     Box(
         contentAlignment = Alignment.TopCenter,
-        modifier = Modifier.padding(32.dp)
+        modifier = Modifier.padding(16.dp)
+    ){
+        var text = ""
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text(text = "Search")}
+        )
+    }
+    Box(
+        contentAlignment = Alignment.TopCenter,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 70.dp)
     ) {
         // list out the pantry in a column style.
         Column(
