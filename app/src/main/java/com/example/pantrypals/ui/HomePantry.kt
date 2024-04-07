@@ -212,6 +212,7 @@ fun HomePantry(navController: NavController) {
         )
     }
 
+    
     var newQuantity by remember { mutableStateOf(0) }
     if(isEditQuantityDialogVisible){
         LaunchedEffect(isEditQuantityDialogVisible) {
@@ -225,7 +226,8 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // remove item from database
-                        dbHandler.EditQuantity(targetItem.itemID, newQuantity)
+                        if (newQuantity <= 0) dbHandler.removeGrocery(targetItem.itemID)
+                        else dbHandler.EditQuantity(targetItem.itemID, newQuantity)
 
                         isEditQuantityDialogVisible = false
                     }
