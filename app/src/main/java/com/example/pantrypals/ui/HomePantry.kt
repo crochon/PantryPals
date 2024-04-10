@@ -34,12 +34,10 @@ fun HomePantry(navController: NavController) {
     var expirationDate by remember { mutableStateOf("") }
     var isAddDialogVisible by remember { mutableStateOf(false) }
 
-    var text by remember {mutableStateOf("")}
-    
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dbHandler = DBHandler(context)
-    var groceries by remember {mutableStateOf(dbHandler.searchPantry(text))}
+    var groceries by remember {mutableStateOf(dbHandler.readGroceries())}
 
     var isDeleteDialogOpen by remember { mutableStateOf(false) }
     var isEditQuantityDialogVisible by remember {mutableStateOf(false)}
@@ -56,10 +54,10 @@ fun HomePantry(navController: NavController) {
         contentAlignment = Alignment.TopCenter,
         modifier = Modifier.padding(16.dp)
     ){
-        //var text by remember {mutableStateOf("")}
+        var text by remember {mutableStateOf("")}
         TextField(
             value = text,
-            onValueChange = {text = it},//;groceries = dbHandler.SearchPanty(text)},
+            onValueChange = {text = it;groceries = dbHandler.SearchPanty(text)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = "Search")}
         )
