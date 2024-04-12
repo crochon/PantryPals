@@ -37,6 +37,7 @@ fun HomePantry(navController: NavController) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dbHandler = DBHandler(context)
+    var text by remember {mutableStateOf("")}
     var groceries by remember {mutableStateOf(dbHandler.readGroceries())}
 
     var isDeleteDialogOpen by remember { mutableStateOf(false) }
@@ -54,7 +55,7 @@ fun HomePantry(navController: NavController) {
         contentAlignment = Alignment.TopCenter,
         modifier = Modifier.padding(16.dp)
     ){
-        var text by remember {mutableStateOf("")}
+
         TextField(
             value = text,
             onValueChange = {text = it;groceries = dbHandler.SearchPanty(text)},
@@ -154,7 +155,7 @@ fun HomePantry(navController: NavController) {
                     onClick = {
                         // remove item from database
                         dbHandler.EditExpirationDate(targetItem.itemID, newExpirationDate)
-
+                        groceries = dbHandler.SearchPanty(text)
                         isEditExpirationDialogVisible = false
                     }
                 ) {
@@ -229,7 +230,7 @@ fun HomePantry(navController: NavController) {
                         // remove item from database
                         if (newQuantity <= 0) dbHandler.removeGrocery(targetItem.itemID)
                         else dbHandler.EditQuantity(targetItem.itemID, newQuantity)
-
+                        groceries = dbHandler.SearchPanty(text)
                         isEditQuantityDialogVisible = false
                     }
                 ) {
@@ -289,7 +290,7 @@ fun HomePantry(navController: NavController) {
                     onClick = {
                         // remove item from database
                         dbHandler.removeGrocery(targetItem.itemID)
-
+                        groceries = dbHandler.SearchPanty(text)
                         isDeleteDialogOpen = false
                     }
                 ) {
@@ -335,6 +336,7 @@ fun HomePantry(navController: NavController) {
                     onClick = {
                         // Add the item details to the database
                         dbHandler.addNewGrocery(itemName ,quantity, expirationDate)
+                        groceries = dbHandler.SearchPanty(text)
                            isAddDialogVisible = false
                     }
                 ) {
