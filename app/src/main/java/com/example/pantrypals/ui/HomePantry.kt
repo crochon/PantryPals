@@ -29,6 +29,8 @@ import java.util.*
 @Composable
 fun HomePantry(navController: NavController) {
     val DarkGreen = Color(0, 100, 0)
+    val DarkPeri = Color(95, 100, 245)
+    val LightPeri = Color(140, 143, 245)
     var itemName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(0) }
     var expirationDate by remember { mutableStateOf("") }
@@ -52,75 +54,86 @@ fun HomePantry(navController: NavController) {
 
     //search
     Box(
-        contentAlignment = Alignment.TopCenter,
-        modifier = Modifier.padding(16.dp)
-    ){
-
-        TextField(
-            value = text,
-            onValueChange = {text = it;groceries = dbHandler.SearchPanty(text)},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(text = "Search")}
-        )
-    }
-
-    Box(
-        contentAlignment = Alignment.TopCenter,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 70.dp)
-    ) {
-        // list out the pantry in a column style.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+        modifier = with (Modifier) {
+            fillMaxSize()
+                .background(LightPeri)
+        })
+    {
+        Box(
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier.padding(16.dp)
         ) {
-            // loop over all items in the pantry
-            groceries?.forEachIndexed { index, grocery ->
-                var expandedContextMenu by remember { mutableStateOf(false) }
+
+            TextField(
+                value = text,
+                onValueChange = { text = it;groceries = dbHandler.SearchPanty(text) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(text = "Search") }
+            )
+        }
+
+        Box(
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 70.dp)
+        ) {
+            // list out the pantry in a column style.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // loop over all items in the pantry
+                groceries?.forEachIndexed { index, grocery ->
+                    var expandedContextMenu by remember { mutableStateOf(false) }
 
 
-                Row(Modifier
-                    .indication(interactionSource, LocalIndication.current)
-                    .pointerInput(true) {
-                        detectTapGestures(
-                            onLongPress = {
-                                expandedContextMenu = true;
-                                targetItem = grocery
-                                pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                    Row(Modifier
+                        .indication(interactionSource, LocalIndication.current)
+                        .pointerInput(true) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    expandedContextMenu = true;
+                                    targetItem = grocery
+                                    pressOffset = DpOffset(it.x.toDp(), it.y.toDp())
+                                })
+                        }
+                        .onSizeChanged {
+                            itemHeight = with(density) { it.height.toDp() }
+                        })
+                    {
+
+                        // Content of grocery item
+                        Text(
+                            "${grocery.itemName} Quantity: ${grocery.itemCount} Expires: ${grocery.itemExpiration}",
+                            Modifier
+                                .fillMaxWidth()
+                                .background(LightPeri)
+                                .padding(8.dp)
+                        )
+
+                        // context menu
+                        DropdownMenu(expanded = expandedContextMenu,
+                            offset = pressOffset.copy(y = pressOffset.y - itemHeight),
+                            onDismissRequest = { expandedContextMenu = false }) {
+                            DropdownMenuItem(text = { Text(text = "Edit Quantity") }, onClick = {
+                                isEditQuantityDialogVisible = true
+                                expandedContextMenu = false;
                             })
-                    }
-                    .onSizeChanged {
-                        itemHeight = with(density) { it.height.toDp() }
-                    })
-                {
+                            DropdownMenuItem(
+                                text = { Text(text = "Edit Expiration Date") },
+                                onClick = {
+                                    isEditExpirationDialogVisible = true
+                                    expandedContextMenu = false
+                                })
+                            DropdownMenuItem(text = { Text(text = "Remove") }, onClick = {
+                                isDeleteDialogOpen = true
+                                expandedContextMenu = false;
+                            })
 
-                    // Content of grocery item
-                    Text("${grocery.itemName} Quantity: ${grocery.itemCount} Expires: ${grocery.itemExpiration}",
-                        Modifier
-                            .fillMaxWidth()
-                            .background(Color.LightGray)
-                            .padding(8.dp))
-
-                    // context menu
-                    DropdownMenu(expanded = expandedContextMenu,
-                        offset= pressOffset.copy(y=pressOffset.y - itemHeight),
-                        onDismissRequest = { expandedContextMenu = false }) {
-                        DropdownMenuItem(text = { Text(text = "Edit Quantity") }, onClick = {
-                            isEditQuantityDialogVisible =true
-                            expandedContextMenu =false;
-                        })
-                        DropdownMenuItem(text = { Text(text = "Edit Expiration Date") }, onClick = {
-                            isEditExpirationDialogVisible=true
-                            expandedContextMenu =false
-                        })
-                        DropdownMenuItem(text = { Text(text = "Remove") }, onClick = {
-                            isDeleteDialogOpen =true
-                            expandedContextMenu =false;
-                        })
+                        }
 
                     }
-
                 }
             }
         }
@@ -135,7 +148,7 @@ fun HomePantry(navController: NavController) {
         OutlinedButton(
             onClick = { isAddDialogVisible = true },
             enabled = true,
-            colors = ButtonDefaults.buttonColors(DarkGreen)
+            colors = ButtonDefaults.buttonColors(DarkPeri)
         ) {
             Text(text = "Add Item")
         }
