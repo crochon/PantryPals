@@ -1,4 +1,5 @@
 import android.app.DatePickerDialog
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -20,14 +21,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.pantrypals.DBHandler
 import com.example.pantrypals.PantryModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun HomePantry(navController: NavController) {
+fun HomePantry(navController: NavController,pantryID: Long,context: Context) {
     val DarkGreen = Color(0, 100, 0)
     val DarkPeri = Color(95, 100, 245)
     val LightPeri = Color(140, 143, 245)
@@ -39,18 +42,32 @@ fun HomePantry(navController: NavController) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dbHandler = DBHandler(context)
-    var text by remember {mutableStateOf("")}
-    var groceries by remember {mutableStateOf(dbHandler.readGroceries())}
+    var groceries by remember { mutableStateOf(listOf<PantryModel>()) }
+    var text by remember { mutableStateOf("") }
+    val pantryName = remember { dbHandler.getPantryName(pantryID) ?: "" }
 
     var isDeleteDialogOpen by remember { mutableStateOf(false) }
     var isEditQuantityDialogVisible by remember {mutableStateOf(false)}
     var isEditExpirationDialogVisible by remember { mutableStateOf(false) }
-    var targetItem by remember { mutableStateOf(PantryModel(-1,"",-1,"")) }
+    var targetItem by remember { mutableStateOf(PantryModel(-1,"",-1,"",-1)) }
 
     var pressOffset by remember{ mutableStateOf(DpOffset.Zero) }
     var itemHeight by remember { mutableStateOf(0.dp) }
     val interactionSource = remember{ MutableInteractionSource() }
     val density = LocalDensity.current
+
+    // CoroutineScope for database operations
+    val scope = rememberCoroutineScope()
+
+    // Load groceries from database based on selected pantry
+    LaunchedEffect(pantryID) {
+        scope.launch {
+            val groceriesFromDB = withContext(Dispatchers.IO) {
+                DBHandler(context).readGroceries(pantryID) ?: emptyList()
+            }
+            groceries = groceriesFromDB
+        }
+    }
 
     //search
     Box(
@@ -66,7 +83,7 @@ fun HomePantry(navController: NavController) {
 
             TextField(
                 value = text,
-                onValueChange = { text = it;groceries = dbHandler.SearchPanty(text) },
+                onValueChange = { text = it;groceries = dbHandler.SearchPantry(text,pantryID) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(text = "Search") }
             )
@@ -86,7 +103,6 @@ fun HomePantry(navController: NavController) {
                 // loop over all items in the pantry
                 groceries?.forEachIndexed { index, grocery ->
                     var expandedContextMenu by remember { mutableStateOf(false) }
-
 
                     Row(Modifier
                         .indication(interactionSource, LocalIndication.current)
@@ -139,7 +155,6 @@ fun HomePantry(navController: NavController) {
         }
     }
 
-
     // Add Item Button
     Box(
         contentAlignment = Alignment.BottomCenter,
@@ -157,10 +172,13 @@ fun HomePantry(navController: NavController) {
     var newExpirationDate by remember { mutableStateOf("") }
     if(isEditExpirationDialogVisible){
         LaunchedEffect(isEditExpirationDialogVisible) {
-            newExpirationDate = ""
+            newExpirationDate = targetItem.itemExpiration
         }
         AlertDialog(
-            onDismissRequest = { isEditExpirationDialogVisible = false },
+            onDismissRequest = {
+                isEditExpirationDialogVisible = false
+                newExpirationDate + " "
+            },
             title = { Text(text = "Edit Expiration Date of ${targetItem.itemName}") },
             confirmButton = {
 
@@ -168,7 +186,7 @@ fun HomePantry(navController: NavController) {
                     onClick = {
                         // remove item from database
                         dbHandler.EditExpirationDate(targetItem.itemID, newExpirationDate)
-                        groceries = dbHandler.SearchPanty(text)
+                        groceries = dbHandler.SearchPantry(text,pantryID)
                         isEditExpirationDialogVisible = false
                     }
                 ) {
@@ -221,13 +239,11 @@ fun HomePantry(navController: NavController) {
                             Text(text = newExpirationDate.ifEmpty { "Select Date" })
                         }
                     }
-
                 }
             }
         )
     }
 
-    
     var newQuantity by remember { mutableStateOf(0) }
     if(isEditQuantityDialogVisible){
         LaunchedEffect(isEditQuantityDialogVisible) {
@@ -243,7 +259,7 @@ fun HomePantry(navController: NavController) {
                         // remove item from database
                         if (newQuantity <= 0) dbHandler.removeGrocery(targetItem.itemID)
                         else dbHandler.EditQuantity(targetItem.itemID, newQuantity)
-                        groceries = dbHandler.SearchPanty(text)
+                        groceries = dbHandler.SearchPantry(text,pantryID)
                         isEditQuantityDialogVisible = false
                     }
                 ) {
@@ -303,7 +319,7 @@ fun HomePantry(navController: NavController) {
                     onClick = {
                         // remove item from database
                         dbHandler.removeGrocery(targetItem.itemID)
-                        groceries = dbHandler.SearchPanty(text)
+                        groceries = dbHandler.SearchPantry(text,pantryID)
                         isDeleteDialogOpen = false
                     }
                 ) {
@@ -348,9 +364,10 @@ fun HomePantry(navController: NavController) {
                 Button(
                     onClick = {
                         // Add the item details to the database
-                        dbHandler.addNewGrocery(itemName ,quantity, expirationDate)
-                        groceries = dbHandler.SearchPanty(text)
-                           isAddDialogVisible = false
+                        val groceriesArrayList = ArrayList(groceries) // Convert the List to ArrayList before passing to addNewGrocery
+                        dbHandler.addNewGrocery(pantryID, itemName ,quantity, expirationDate)
+                        groceries += PantryModel(-1, itemName, quantity, expirationDate, pantryID)
+                        isAddDialogVisible = false
                     }
                 ) {
                     Text("Add")

@@ -5,4 +5,5 @@ data class PantryModel(
         var itemName: String,
         var itemCount: Int,
         var itemExpiration: String,
+        var pantryID: Long
 )

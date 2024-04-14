@@ -1,175 +1,234 @@
-package com.example.pantrypals
-
-
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import com.example.pantrypals.PantryModel
+import java.lang.Exception
 
-class DBHandler  // creating a constructor for our database handler.
-    (context: Context?) :
-    SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
-    // below method is for creating a database by running a sqlite query
+private const val DATABASE_NAME = "PantryDB"
+private const val DATABASE_VERSION = 1
+private const val TABLE_ITEMS = "items"
+private const val ITEM_ID_COL = "item_id"
+private const val ITEM_NAME_COL = "item_name"
+private const val ITEM_COUNT_COL = "item_count"
+private const val ITEM_EXPIRATION_COL = "item_expiration"
+private const val PANTRY_ID_COL = "pantry_id"
+private const val TABLE_PANTRIES = "pantries"
+private const val PANTRY_NAME_COL = "pantry_name"
+
+class DBHandler(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+
     override fun onCreate(db: SQLiteDatabase) {
-        // on below line we are creating an sqlite query and we are
-        // setting our column names along with their data types.
-        val query = ("CREATE TABLE " + TABLE_NAME + " ("
-                + ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + NAME_COL + " TEXT,"
-                + COUNT_COL + " TEXT,"
-                + EXPIRATION_COL + " TEXT);")
+        // Create items table
+        val createItemsTable = ("CREATE TABLE $TABLE_ITEMS ($ITEM_ID_COL INTEGER PRIMARY KEY, $ITEM_NAME_COL TEXT, $ITEM_COUNT_COL INTEGER, $ITEM_EXPIRATION_COL TEXT, $PANTRY_ID_COL INTEGER)")
+        db.execSQL(createItemsTable)
 
-        // at last we are calling a exec sql method to execute above sql query
-        db.execSQL(query)
-    }
-
-    // this method is use to add new course to our sqlite database.
-    public fun addNewGrocery(
-        ItemName: String?,
-        ItemCount: Int?,
-        ItemExpiration: String?,
-    ) {
-        // on below line we are creating a variable for
-        // our sqlite database and calling writable method
-        // as we are writing data in our database.
-        val db = this.writableDatabase
-        // on below line we are creating a
-        // variable for content values.
-        val values = ContentValues()
-        // on below line we are passing all values
-        // along with its key and value pair.
-        values.put(NAME_COL, ItemName)
-        values.put(COUNT_COL, ItemCount)
-        values.put(EXPIRATION_COL, ItemExpiration)
-        // after adding all values we are passing
-        // content values to our table.
-        db.insert(TABLE_NAME, null, values)
-        // at last we are closing our
-        // database after adding database.
-        db.close()
-    }
-
-    public fun EditQuantity(ItemID: Int?, ItemQuantity: Int?){
-        val db = this.writableDatabase
-        val values = ContentValues()
-
-        values.put(COUNT_COL, ItemQuantity)
-
-        db.update(TABLE_NAME,values,"$ID_COL=?", arrayOf(ItemID.toString()))
-        db.close()
-    }
-
-    public fun EditExpirationDate(ItemID: Int?, ItemExpiration: String?){
-        val db = this.writableDatabase
-        val values = ContentValues()
-
-        values.put(EXPIRATION_COL, ItemExpiration)
-
-        db.update(TABLE_NAME,values,"$ID_COL=?", arrayOf(ItemID.toString()))
-        db.close()
-    }
-
-    /*
-        Removes a Grocery Item Based on it's ID
-     */
-    public fun removeGrocery(ItemID: Int?){
-        val db = this.writableDatabase
-
-        println("$ItemID")
-        // delete row where id matches given parameters.
-        db.delete(TABLE_NAME, "$ID_COL=?", arrayOf(ItemID.toString()))
-
-        db.close()
+        // Create pantries table
+        val createPantriesTable = ("CREATE TABLE $TABLE_PANTRIES ($PANTRY_ID_COL INTEGER PRIMARY KEY, $PANTRY_NAME_COL TEXT)")
+        db.execSQL(createPantriesTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // this method is called to check if the table exists already.
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME)
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_ITEMS")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_PANTRIES")
         onCreate(db)
     }
 
-    companion object {
-        // creating a constant variables for our database.
-        // below variable is for our database name.
-        private const val DB_NAME = "Pantry_DB"
-
-        // below int is our database version
-        private const val DB_VERSION = 1
-
-        // below variable is for our table name.
-        private const val TABLE_NAME = "Pantry_Name"
-
-        // below variable is for our id column.
-        private const val ID_COL = "id"
-
-        // below variable is for our course name column
-        private const val NAME_COL = "Grocery_Name"
-
-        // below variable id for our course duration column.
-        private const val COUNT_COL = "Grocery_Count"
-
-        // below variable for our course description column.
-        private const val EXPIRATION_COL = "Grocery_Expiration"
+    fun addNewGrocery(pantryId: Long, itemName: String, quantity: Int, expirationDate: String) {
+        val values = ContentValues()
+        values.put(ITEM_NAME_COL, itemName)
+        values.put(ITEM_COUNT_COL, quantity)
+        values.put(ITEM_EXPIRATION_COL, expirationDate)
+        values.put(PANTRY_ID_COL, pantryId)
+        val db = this.writableDatabase
+        db.insert(TABLE_ITEMS, null, values)
+        db.close()
     }
 
-    // we have created a new method for reading all the courses.
-    public fun readGroceries(): ArrayList<PantryModel>? {
-        // on below line we are creating a database for reading our database.
+    fun readGroceries(pantryId: Long): ArrayList<PantryModel>? {
         val db = this.readableDatabase
+        val itemList: ArrayList<PantryModel> = ArrayList()
 
-        // on below line we are creating a cursor with query to read data from database.
-        val cursorPantry: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
+        try {
+            val cursor = db.rawQuery("SELECT * FROM $TABLE_ITEMS WHERE $PANTRY_ID_COL = ?", arrayOf(pantryId.toString()))
 
-        // on below line we are creating a new array list.
-        val courseModelArrayList: ArrayList<PantryModel> = ArrayList()
+            while (cursor.moveToNext()) {
+                val itemIdIndex = cursor.getColumnIndex(ITEM_ID_COL)
+                val itemNameIndex = cursor.getColumnIndex(ITEM_NAME_COL)
+                val itemCountIndex = cursor.getColumnIndex(ITEM_COUNT_COL)
+                val itemExpirationIndex = cursor.getColumnIndex(ITEM_EXPIRATION_COL)
+                val pantryIdIndex = cursor.getColumnIndex(PANTRY_ID_COL)
 
-        // moving our cursor to first position.
-        if (cursorPantry.moveToFirst()) {
-            do {
-                // on below line we are adding the data from cursor to our array list.
-                courseModelArrayList.add(
+                // Create PantryModel object and add it to the list
+                itemList.add(
                     PantryModel(
-                        cursorPantry.getInt(0),
-                        cursorPantry.getString(1),
-                        cursorPantry.getInt(2),
-                        cursorPantry.getString(3)
+                        cursor.getInt(itemIdIndex),
+                        cursor.getString(itemNameIndex),
+                        cursor.getInt(itemCountIndex),
+                        cursor.getString(itemExpirationIndex),
+                        cursor.getLong(pantryIdIndex)
                     )
                 )
-            } while (cursorPantry.moveToNext())
-            // moving our cursor to next.
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error reading groceries", e)
+        } finally {
+            db.close() //close database connection
         }
-        // at last closing our cursor and returning our array list.
-        cursorPantry.close()
-        return courseModelArrayList
+
+        return itemList
     }
-    public fun SearchPanty(text: String): ArrayList<PantryModel>?{
-        // on below line we are creating a database for reading our database.
+
+    fun removeGrocery(itemId: Int) {
+        val db = this.writableDatabase
+        try {
+            val deletedRows = db.delete(TABLE_ITEMS, "$ITEM_ID_COL = ?", arrayOf(itemId.toString()))
+            if (deletedRows == 0) {
+                Log.e("DBHandler", "No rows deleted for itemId: $itemId")
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error removing grocery with itemId: $itemId", e)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun EditQuantity(itemId: Int, newQuantity: Int) {
+        val db = this.writableDatabase
+        try {
+            val values = ContentValues().apply {
+                put(ITEM_COUNT_COL, newQuantity)
+            }
+            val rowsAffected = db.update(TABLE_ITEMS, values, "$ITEM_ID_COL = ?", arrayOf(itemId.toString()))
+            if (rowsAffected == 0) {
+                Log.e("DBHandler", "No rows updated for itemId: $itemId")
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error updating quantity for itemId: $itemId", e)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun EditExpirationDate(itemId: Int, newExpirationDate: String) {
+        val db = this.writableDatabase
+        try {
+            val values = ContentValues().apply {
+                put(ITEM_EXPIRATION_COL, newExpirationDate)
+            }
+            val rowsAffected = db.update(TABLE_ITEMS, values, "$ITEM_ID_COL = ?", arrayOf(itemId.toString()))
+            if (rowsAffected == 0) {
+                Log.e("DBHandler", "No rows updated for itemId: $itemId")
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error updating expiration date for itemId: $itemId", e)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun addPantry(pantryName: String) {
+        val values = ContentValues()
+        values.put(PANTRY_NAME_COL, pantryName)
+        val db = this.writableDatabase
+        db.insert(TABLE_PANTRIES, null, values)
+        db.close()
+    }
+    fun readPantries(): ArrayList<String>? {
         val db = this.readableDatabase
+        val pantryList: ArrayList<String> = ArrayList()
+        try {
+            // Query to select all rows from the pantries table
+            val cursor = db.rawQuery("SELECT * FROM $TABLE_PANTRIES", null)
+            while (cursor.moveToNext()) {
+                val pantryNameIndex = cursor.getColumnIndex(PANTRY_NAME_COL)
+                val pantryName = cursor.getString(pantryNameIndex)
+                // Add unique pantry names to the list
+                if (!pantryList.contains(pantryName)) { // Check if pantry name already exists in the list
+                    pantryList.add(pantryName)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error reading pantries", e)
+        } finally {
+            db.close()
+        }
+        return pantryList
+    }
 
-        // on below line we are creating a cursor with query to read data from database.
-        val cursorPantry: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $NAME_COL LIKE \'%$text%\'  ", null)
+    fun getPantryID(pantryName: String): Long? {
+        val db = this.readableDatabase
+        var pantryID: Long? = null
 
-        // on below line we are creating a new array list.
-        val SearchArrayList: ArrayList<PantryModel> = ArrayList()
+        try {
+            // Query to select pantry ID based on pantry name
+            val cursor = db.rawQuery("SELECT $PANTRY_ID_COL FROM $TABLE_PANTRIES WHERE $PANTRY_NAME_COL = ?", arrayOf(pantryName))
 
-        // moving our cursor to first position.
-        if (cursorPantry.moveToFirst()) {
-            do {
-                // on below line we are adding the data from cursor to our array list.
-                SearchArrayList.add(
+            if (cursor.moveToFirst()) {
+                val pantryIdIndex = cursor.getColumnIndex(PANTRY_ID_COL)
+                pantryID = cursor.getLong(pantryIdIndex)
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error retrieving pantryID", e)
+        } finally {
+            db.close()
+        }
+
+
+        return pantryID
+    }
+    fun getPantryName(pantryId: Long): String? {
+        val db = this.readableDatabase
+        var pantryName: String? = null
+
+        try {
+            // Query to select pantry name based on pantry ID
+            val cursor = db.rawQuery("SELECT $PANTRY_NAME_COL FROM $TABLE_PANTRIES WHERE $PANTRY_ID_COL = ?", arrayOf(pantryId.toString()))
+
+            if (cursor.moveToFirst()) {
+                val pantryNameIndex = cursor.getColumnIndex(PANTRY_NAME_COL)
+                pantryName = cursor.getString(pantryNameIndex)
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error retrieving pantry name", e)
+        } finally {
+            db.close()
+        }
+
+        return pantryName
+    }
+
+    fun SearchPantry(text: String, pantryId: Long): ArrayList<PantryModel> {
+        val db = this.readableDatabase
+        val itemList: ArrayList<PantryModel> = ArrayList()
+
+        try {
+            val cursor = db.rawQuery("SELECT * FROM $TABLE_ITEMS WHERE $ITEM_NAME_COL LIKE ? AND $PANTRY_ID_COL = ?", arrayOf("%$text%", pantryId.toString()))
+
+            while (cursor.moveToNext()) {
+                val itemIdIndex = cursor.getColumnIndex(ITEM_ID_COL)
+                val itemNameIndex = cursor.getColumnIndex(ITEM_NAME_COL)
+                val itemCountIndex = cursor.getColumnIndex(ITEM_COUNT_COL)
+                val itemExpirationIndex = cursor.getColumnIndex(ITEM_EXPIRATION_COL)
+                val pantryIdIndex = cursor.getColumnIndex(PANTRY_ID_COL)
+
+                itemList.add(
                     PantryModel(
-                        cursorPantry.getInt(0),
-                        cursorPantry.getString(1),
-                        cursorPantry.getInt(2),
-                        cursorPantry.getString(3)
+                        cursor.getInt(itemIdIndex),
+                        cursor.getString(itemNameIndex),
+                        cursor.getInt(itemCountIndex),
+                        cursor.getString(itemExpirationIndex),
+                        cursor.getLong(pantryIdIndex)
                     )
                 )
-            } while (cursorPantry.moveToNext())
-            // moving our cursor to next.
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error searching pantry", e)
+        } finally {
+            db.close()
         }
-        // at last closing our cursor and returning our array list.
-        cursorPantry.close()
-        return SearchArrayList
+
+        return itemList
     }
 }

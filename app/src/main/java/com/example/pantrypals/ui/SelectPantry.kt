@@ -24,8 +24,15 @@ import com.example.pantrypals.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectPantry(navController: NavController) {
-    val pantries = remember { mutableStateOf(listOf<String>()) }
+fun SelectPantry(navController: NavController, dbHandler: DBHandler) {
+    val pantries = remember { mutableStateListOf<String>() }
+
+    // Fetch pantries from the database
+    val pantryNames = dbHandler.readPantries()
+    if (pantryNames != null) {
+        pantries.clear()
+        pantries.addAll(pantryNames)
+    }
 
     Scaffold(
         topBar = {
@@ -38,20 +45,22 @@ fun SelectPantry(navController: NavController) {
                     Text("Pantries", fontWeight = FontWeight.Bold)
                 },
                 actions = {
-                    AddPantryButton(navController) { pantryName ->
-                        pantries.value = pantries.value + pantryName
+                    AddPantryButton(navController,dbHandler) { pantryName ->
+                        pantries.add(pantryName)
                     }
                 }
             )
         }
     ) { innerPadding ->
         Column(
+            // Column for the main content
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.White)
         ) {
-            if (pantries.value.isEmpty()) { // Display message only if there are no pantries
+            // Display message only if there are no pantries
+            if (pantries.isEmpty()) {
                 Text(
                     text = "Your pantries will appear here",
                     modifier = Modifier.padding(16.dp),
@@ -59,16 +68,17 @@ fun SelectPantry(navController: NavController) {
                     color = Color.Gray
                 )
             } else {
+                // LazyColumn to display the list of pantries
                 LazyColumn(
                     modifier = Modifier.weight(1f)
                 ) {
                     //Display pantries
-                    items(pantries.value) { pantry ->
+                    items(pantries) { pantry ->
                         Text(
                             text = pantry,
                             modifier = Modifier.padding(16.dp).clickable {
-                                //Navigate to HomePantry Screen
-                                navController.navigate(Screen.HomePantry.route)
+                                // Navigate to HomePantry Screen when a pantry is clicked
+                                navController.navigate(Screen.HomePantry.route + "/$pantry")
                             },
                         fontSize = 16.sp,
                         color = Color.Black
@@ -81,7 +91,7 @@ fun SelectPantry(navController: NavController) {
 }
 
 @Composable
-fun AddPantryButton(navController: NavController, onPantryAdded: (String) -> Unit) {
+fun AddPantryButton(navController: NavController, dbHandler: DBHandler, onPantryAdded: (String) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
 
     Box(
@@ -100,6 +110,8 @@ fun AddPantryButton(navController: NavController, onPantryAdded: (String) -> Uni
             AddPantryDialog(
                 onDismiss = { showDialog = false },
                 onPantryCreated = { pantryName ->
+                    // Call the function to add the new pantry to the database
+                    dbHandler.addPantry(pantryName)
                     onPantryAdded(pantryName)
                     showDialog = false
                 }
@@ -122,7 +134,7 @@ fun AddPantryDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    // Call the callback function to create the pantry
+                    // Call the callback function to create the pantry with the entered name
                     onPantryCreated(pantryName)
                 }
             ) {
