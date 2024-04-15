@@ -80,7 +80,6 @@ fun HomePantry(navController: NavController,pantryID: Long,context: Context) {
             contentAlignment = Alignment.TopCenter,
             modifier = Modifier.padding(16.dp)
         ) {
-
             TextField(
                 value = text,
                 onValueChange = { text = it;groceries = dbHandler.SearchPantry(text,pantryID) },
@@ -363,11 +362,16 @@ fun HomePantry(navController: NavController,pantryID: Long,context: Context) {
             confirmButton = {
                 Button(
                     onClick = {
+                        if (quantity <= 0){
+                        }
                         // Add the item details to the database
-                        val groceriesArrayList = ArrayList(groceries) // Convert the List to ArrayList before passing to addNewGrocery
-                        dbHandler.addNewGrocery(pantryID, itemName ,quantity, expirationDate)
-                        groceries += PantryModel(-1, itemName, quantity, expirationDate, pantryID)
-                        isAddDialogVisible = false
+                        else{
+                            val groceriesArrayList = ArrayList(groceries) // Convert the List to ArrayList before passing to addNewGrocery
+                            dbHandler.addNewGrocery(pantryID, itemName ,quantity, expirationDate)
+                            groceries += PantryModel(-1, itemName, quantity, expirationDate, pantryID)
+                            isAddDialogVisible = false
+                        }
+
                     }
                 ) {
                     Text("Add")
