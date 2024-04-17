@@ -1,26 +1,30 @@
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.TopAppBarDefaults
 import com.example.pantrypals.Screen
+import androidx.compose.ui.window.Dialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,15 +41,9 @@ fun SelectPantry(navController: NavController, dbHandler: DBHandler) {
     Scaffold(
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
-                title = {
-                    Text("Pantries", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Pantries", fontWeight = FontWeight.Bold) },
                 actions = {
-                    AddPantryButton(navController,dbHandler) { pantryName ->
+                    AddPantryButton(navController, dbHandler) { pantryName ->
                         pantries.add(pantryName)
                     }
                 }
@@ -53,13 +51,10 @@ fun SelectPantry(navController: NavController, dbHandler: DBHandler) {
         }
     ) { innerPadding ->
         Column(
-            // Column for the main content
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color.White)
         ) {
-            // Display message only if there are no pantries
             if (pantries.isEmpty()) {
                 Text(
                     text = "Your pantries will appear here",
@@ -68,28 +63,210 @@ fun SelectPantry(navController: NavController, dbHandler: DBHandler) {
                     color = Color.Gray
                 )
             } else {
-                // LazyColumn to display the list of pantries
                 LazyColumn(
                     modifier = Modifier.weight(1f)
                 ) {
-                    //Display pantries
-                    items(pantries) { pantry ->
-                        Text(
-                            text = pantry,
-                            modifier = Modifier.padding(16.dp).clickable {
-                                // Navigate to HomePantry Screen when a pantry is clicked
-                                navController.navigate(Screen.HomePantry.route + "/$pantry")
-                            },
-                        fontSize = 16.sp,
-                        color = Color.Black
-                        )
+                    items(pantries) { pantryName ->
+                        PantryEntry(
+                            pantryName = pantryName, //Current pantry name
+                            pantryId = dbHandler.getPantryID(pantryName), // ID of the pantry retrieved from the database
+
+                            // Action to navigate to the homePantry screen when clicked
+                            onItemClick = { pantryName -> navController.navigate(Screen.HomePantry.route + "/$pantryName") },
+
+                            // Action to edit the pantry name
+                            onEditPantryName = { pantryName, newName ->
+                                // Call to edit the pantry name in the database
+                                dbHandler.editPantryName(pantryName, newName)
+
+                                // Update the pantry name in the pantries list to update UI
+                                val index = pantries.indexOf(pantryName)
+                                if (index != -1) {
+                                    pantries[index] = newName
+                                }
+                    },
+                            // Action to remove the pantry
+                            onRemovePantry = { pantryName, pantryId ->
+                                // Call to remove the pantry from the database
+                                dbHandler.removePantry(pantryName, pantryId)
+                                // Remove the pantry from the list
+                                pantries.remove(pantryName)
+                    })
+                }
+            }
+        }
+    } }
+}
+
+@Composable
+fun PantryEntry(
+    pantryName: String,
+    pantryId: Long?,
+    onItemClick: (String) -> Unit,
+    onEditPantryName: (String, String) -> Unit,
+    onRemovePantry: (String, Long) -> Unit
+) {
+
+    // State to control visibility of options dialog.
+    var showOptions by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onItemClick(pantryName) }
+    ) {
+        // Row for pantry name and options icon
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Display pantry name.
+            Text(
+                text = pantryName,
+                modifier = Modifier.weight(1f)
+            )
+            // Options icon button
+            IconButton(onClick = { showOptions = true }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Options")
+            }
+        }
+    }
+    if (showOptions) {
+        if (pantryId != null) {
+            PantryOptionsDialog(
+                pantryName = pantryName,
+                pantryId = pantryId,
+                onEditPantryName = onEditPantryName,
+                onRemovePantry = onRemovePantry,
+                onClose = { showOptions = false }
+            )
+        }
+    }
+}
+
+@Composable
+fun PantryOptionsDialog(
+    pantryName: String,
+    pantryId: Long,
+    onEditPantryName: (String, String) -> Unit,
+    onRemovePantry: (String, Long) -> Unit,
+    onClose: () -> Unit
+) {
+    var showEditNameDialog by remember { mutableStateOf(false) } // State to control visibility of edit name dialog.
+    val newName by remember { mutableStateOf(pantryName) } // State to hold edited name.
+
+    // Dialog to display options.
+    Dialog(
+        onDismissRequest = onClose
+    ) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .width(300.dp)
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Title for options dialog.
+                Text(
+                    text = "Pantry Options",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                // Button to edit pantry name.
+                Button(
+                    onClick = {
+                        showEditNameDialog = true
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text("Edit Pantry Name")
+                }
+                // Button to remove pantry.
+                Button(
+                    onClick = {
+                        onRemovePantry(pantryName, pantryId)
+                        onClose()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Remove Pantry")
+                }
+            }
+        }
+    }
+
+    // Display edit name dialog if showEditNameDialog is true.
+    if (showEditNameDialog) {
+        EditPantryNameDialog(
+            pantryName = pantryName,
+            newName = newName,
+            onEditPantryName = { newName ->
+                onEditPantryName(pantryName, newName)
+                showEditNameDialog = false
+                onClose()
+            },
+            onClose = {
+                showEditNameDialog = false
+                onClose()
+            }
+        )
+    }
+}
+
+@Composable
+fun EditPantryNameDialog(
+    pantryName: String,
+    newName: String,
+    onEditPantryName: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onClose
+    ) {
+        var editedName by remember { mutableStateOf(newName) } // State to hold new pantry name.
+
+        // Dialog to edit pantry name
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .width(300.dp)
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Text field to enter new pantry name
+                TextField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = { Text("New Pantry Name") },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                )
+                // Row with save and cancel buttons.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = {
+                            onEditPantryName(editedName)
+                        },
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text("Save")
+                    }
+                    Button(
+                        onClick = onClose
+                    ) {
+                        Text("Cancel")
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun AddPantryButton(navController: NavController, dbHandler: DBHandler, onPantryAdded: (String) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
@@ -119,7 +296,6 @@ fun AddPantryButton(navController: NavController, dbHandler: DBHandler, onPantry
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPantryDialog(

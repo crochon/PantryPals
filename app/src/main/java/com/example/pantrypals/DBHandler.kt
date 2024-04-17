@@ -94,6 +94,42 @@ class DBHandler(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, nul
         }
     }
 
+    fun removePantry(pantryName: String, itemId: Long) {
+        val db = this.writableDatabase
+        try {
+            // Delete the pantry from the PANTRIES table
+            val deletedRows = db.delete(TABLE_PANTRIES, "$PANTRY_NAME_COL = ?", arrayOf(pantryName))
+            // Delete the associated items from the ITEMS table using the pantryId
+            db.delete(TABLE_ITEMS, "$PANTRY_ID_COL = ?", arrayOf(itemId.toString()))
+            if (deletedRows == 0) {
+                Log.e("DBHandler", "No rows deleted for pantryName: $pantryName")
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error removing grocery with pantryName: $pantryName", e)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun editPantryName(pantryName: String, newPantryName: String) {
+        val db = this.writableDatabase
+        try {
+            // Create ContentValues object to hold the new pantry name
+            val values = ContentValues().apply {
+                put(PANTRY_NAME_COL, newPantryName)
+            }
+            // Update the pantry name in the PANTRIES table
+            val rowsAffected = db.update(TABLE_PANTRIES, values, "$PANTRY_NAME_COL = ?", arrayOf(pantryName))
+            if (rowsAffected == 0) {
+                Log.e("DBHandler", "No rows updated for pantryName: $")
+            }
+        } catch (e: Exception) {
+            Log.e("DBHandler", "Error updating pantry name for pantryName: $pantryName", e)
+        } finally {
+            db.close()
+        }
+    }
+
     fun EditQuantity(itemId: Int, newQuantity: Int) {
         val db = this.writableDatabase
         try {
